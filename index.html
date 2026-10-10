@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Выбивание номеров</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body {
+            background-color: #1c1c1e;
+            color: white;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+        .title {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        .plate-container {
+            background: white;
+            color: black;
+            border-radius: 8px;
+            border: 2px solid #333;
+            width: 90%;
+            max-width: 350px;
+            height: 80px;
+            display: flex;
+            align-items: center;
+            position: relative;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+        }
+        .plate-main {
+            flex: 3;
+            font-size: 38px;
+            font-weight: bold;
+            text-align: center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            letter-spacing: 2px;
+            border-right: 2px solid #333;
+            height: 100%;
+        }
+        .plate-region {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+        }
+        .region-num {
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .region-flag {
+            font-size: 10px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+        }
+        .flag {
+            width: 15px;
+            height: 10px;
+            background: linear-gradient(to bottom, white 33%, blue 33%, blue 66%, red 66%);
+            margin-left: 3px;
+            border: 1px solid #ccc;
+        }
+        .button {
+            background-color: #007aff;
+            color: white;
+            border: none;
+            border-radius: 14px;
+            padding: 16px 32px;
+            font-size: 18px;
+            font-weight: bold;
+            margin-top: 40px;
+            cursor: pointer;
+            width: 80%;
+            box-shadow: 0 4px 10px rgba(0, 122, 255, 0.4);
+        }
+        .button:active {
+            transform: scale(0.95);
+        }
+        .rarity {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            height: 20px;
+        }
+        .common { color: #8e8e93; }
+        .mirror { color: #0a84ff; text-shadow: 0 0 8px rgba(10, 132, 255, 0.5); }
+        .elite { color: #ff9f0a; text-shadow: 0 0 15px rgba(255, 159, 10, 0.8); transform: scale(1.05);}
+        @keyframes shake {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            50% { transform: translateX(5px); }
+            75% { transform: translateX(-5px); }
+            100% { transform: translateX(0); }
+        }
+        .shaking {
+            animation: shake 0.2s ease-in-out;
+        }
+    </style>
+</head>
+<body>
+    <div class="title">Открой кейс с номером!</div>
+    <div class="rarity" id="rarity-label">Обычный</div>
+    <div class="plate-container" id="plate">
+        <div class="plate-main" id="plate-text">А 000 АА</div>
+        <div class="plate-region">
+            <div class="region-num" id="region-text">77</div>
+            <div class="region-flag">RUS <div class="flag"></div></div>
+        </div>
+    </div>
+    <button class="button" onclick="generatePlate()">Выбить номер</button>
+
+    <script>
+        window.Telegram.WebApp.ready();
+        window.Telegram.WebApp.expand();
+
+        const letters = ['А', 'В', 'Е', 'К', 'М', 'Н', 'О', 'Р', 'С', 'Т', 'У', 'Х'];
+        const plateElement = document.getElementById('plate');
+        const plateText = document.getElementById('plate-text');
+        const regionText = document.getElementById('region-text');
+        const rarityLabel = document.getElementById('rarity-label');
+
+        function getRandom(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+        function getRandomInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+
+        function generatePlate() {
+            if (window.Telegram.WebApp.HapticFeedback) {
+                window.Telegram.WebApp.HapticFeedback.impactOccurred('medium');
+            }
+            plateElement.classList.add('shaking');
+            setTimeout(() => plateElement.classList.remove('shaking'), 200);
+
+            let l1 = getRandom(letters), l2 = getRandom(letters), l3 = getRandom(letters);
+            let num = '', region = getRandomInt(1, 199), rarity = 'common', rarityText = 'Обычный';
+            const rand = Math.random();
+            
+            if (rand < 0.05) {
+                rarity = 'elite'; rarityText = 'ЭЛИТНЫЙ!';
+                const eliteNums = ['001', '007', '111', '222', '333', '444', '555', '666', '777', '888', '999'];
+                num = getRandom(eliteNums);
+                if (Math.random() < 0.3) { l2 = l1; l3 = l1; }
+            } else if (rand < 0.20) {
+                rarity = 'mirror'; rarityText = 'Зеркальный';
+                let d1 = getRandomInt(0, 9), d2 = getRandomInt(0, 9);
+                num = `${d1}${d2}${d1}`;
+            } else {
+                let d1 = getRandomInt(0, 9), d2 = getRandomInt(0, 9), d3 = getRandomInt(0, 9);
+                num = `${d1}${d2}${d3}`;
+            }
+
+            plateText.innerText = `${l1} ${num} ${l2}${l3}`;
+            regionText.innerText = region;
+            rarityLabel.innerText = rarityText;
+            rarityLabel.className = `rarity ${rarity}`;
+            
+            if (rarity === 'elite') {
+                plateElement.style.boxShadow = '0 0 25px rgba(255, 159, 10, 0.8)';
+                plateElement.style.borderColor = '#ff9f0a';
+            } else if (rarity === 'mirror') {
+                plateElement.style.boxShadow = '0 0 15px rgba(10, 132, 255, 0.5)';
+                plateElement.style.borderColor = '#0a84ff';
+            } else {
+                plateElement.style.boxShadow = '0 4px 15px rgba(0,0,0,0.5)';
+                plateElement.style.borderColor = '#333';
+            }
+        }
+    </script>
+</body>
+</html>
